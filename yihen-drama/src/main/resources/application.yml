@@ -23,7 +23,8 @@ spring:
       max-file-size: 20MB
       max-request-size: 50MB
   codec :
-      max-in-memory-size: 5242880
+      # 分镜视频创建请求会把首帧图 Base64 打进 JSON，5MB 易触编码/缓冲上限；与 multipart 上限对齐量级
+      max-in-memory-size: 52428800
   jackson:
     # 全局配置时间格式
     date-format: yyyy-MM-dd HH:mm:ss
@@ -33,6 +34,13 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/YihenDrama?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2b8}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:yihen0214}
+
+# 调用火山等外部 API 的 WebClient（含大 Body、长排队）
+yihen:
+  http:
+    client:
+      connect-timeout-ms: 60000
+      response-timeout-seconds: 600
 
 logging:
   level:
