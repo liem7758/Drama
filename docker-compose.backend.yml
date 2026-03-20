@@ -8,19 +8,19 @@ services:
         JRE_IMAGE: docker.1ms.run/library/eclipse-temurin:17-jre
     container_name: yihen-backend
     restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      mq:
-        condition: service_healthy
-      minio:
-        condition: service_started
-      es:
-        condition: service_healthy
-      qdrant:
-        condition: service_started
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      mq:
+#        condition: service_healthy
+#      minio:
+#        condition: service_started
+#      es:
+#        condition: service_healthy
+#      qdrant:
+#        condition: service_started
     environment:
       TZ: Asia/Shanghai
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/YihenDrama?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2b8
