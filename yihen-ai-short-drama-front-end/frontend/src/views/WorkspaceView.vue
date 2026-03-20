@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="workspace">
     <header class="workspace-header">
       <div class="header-left">
@@ -2607,16 +2607,14 @@ const generateCharacterImage = async (character, actionType) => {
   generatingCharacter.value.add(character.id)
 
   try {
-    const defaultRes = await modelInstanceApi.getDefault('IMAGE')
-    const defaultModel = defaultRes?.data
-
-    if (!defaultModel) {
-      toast.error('未找到默认图像生成模型，请先配置模型')
+    const modelId = await resolveImageModelInstanceId({ updateSelectedModel: true })
+    if (!modelId) {
+      toast.error('没有可用的图像模型，请先在右侧选择或配置模型')
       return
     }
 
     const requestData = {
-      modelInstanceId: defaultModel.id,
+      modelInstanceId: modelId,
       characterId: character.id,
       projectId: projectId,
       description: character.description || `${character.name}的形象描述`
@@ -2669,15 +2667,14 @@ const submitBatchGenerateCharacters = async (characterList) => {
       toast.warning('部分角色尚未保存，已跳过')
     }
 
-    const defaultRes = await modelInstanceApi.getDefault('IMAGE')
-    const defaultModel = defaultRes?.data
-    if (!defaultModel) {
-      toast.error('未找到默认图像生成模型，请先配置模型')
+    const modelId = await resolveImageModelInstanceId({ updateSelectedModel: true })
+    if (!modelId) {
+      toast.error('没有可用的图像模型，请先在右侧选择或配置模型')
       return false
     }
 
     const requestList = validCharacters.map(character => ({
-      modelInstanceId: defaultModel.id,
+      modelInstanceId: modelId,
       characterId: character.id,
       projectId: projectId,
       description: character.description || `${character.name}的形象描述`
@@ -2734,15 +2731,14 @@ const submitBatchGenerateScenes = async (sceneList) => {
       toast.warning('部分场景尚未保存，已跳过')
     }
 
-    const defaultRes = await modelInstanceApi.getDefault('IMAGE')
-    const defaultModel = defaultRes?.data
-    if (!defaultModel) {
-      toast.error('未找到默认图像生成模型，请先配置模型')
+    const modelId = await resolveImageModelInstanceId({ updateSelectedModel: true })
+    if (!modelId) {
+      toast.error('没有可用的图像模型，请先在右侧选择或配置模型')
       return false
     }
 
     const requestList = validScenes.map(scene => ({
-      modelInstanceId: defaultModel.id,
+      modelInstanceId: modelId,
       sceneId: scene.id,
       projectId: projectId,
       description: scene.description || `${scene.name}的场景描述`
@@ -2790,12 +2786,9 @@ const generateCharacterVideo = async (character) => {
   videoTasks.value[character.id] = null
   
   try {
-    if (videoModels.value.length === 0) {
-      await loadVideoModels()
-    }
-    const modelInstanceId = selectedModel.value || defaultVideoModelId.value
+    const modelInstanceId = await resolveVideoModelInstanceId({ updateSelectedModel: true })
     if (!modelInstanceId) {
-      result.value = { success: false, message: '未找到默认视频模型，请先在右侧选择模型' }
+      result.value = { success: false, message: '没有可用的视频模型，请先在右侧配置或选择模型' }
       showResult.value = true
       generatingVideo.value.delete(character.id)
       return
@@ -3198,16 +3191,14 @@ const generateSceneImage = async (scene, actionType) => {
   if (generatingScene.value.has(id)) return
   generatingScene.value.add(id)
   try {
-    // 获取默认图像模型
-    const defaultRes = await modelInstanceApi.getDefault('IMAGE')
-    const defaultModel = defaultRes?.data
-    if (!defaultModel) {
-      toast.error('未找到默认图像生成模型，请先配置模型')
+    const modelId = await resolveImageModelInstanceId({ updateSelectedModel: true })
+    if (!modelId) {
+      toast.error('没有可用的图像模型，请先在右侧选择或配置模型')
       return
     }
 
     const requestData = {
-      modelInstanceId: defaultModel.id,
+      modelInstanceId: modelId,
       sceneId: scene.id,
       projectId: projectId,
       description: scene.description || `${scene.name}的场景描述`
@@ -4273,12 +4264,11 @@ const generateFirstFrameImage = async () => {
   if (!selectedStoryboard.value || generatingFirstFrameImage.value) return
   try {
     generatingFirstFrameImage.value = true
-    if (!imageModels.value.length) {
-      await loadImageModels()
-    }
-    let modelId = defaultImageModelId.value
-    if (!modelId && imageModels.value.length > 0) {
-      modelId = imageModels.value[0].id
+    const modelId = await resolveImageModelInstanceId()
+    if (!modelId) {
+      result.value = { success: false, message: '没有可用的图像模型，无法生成首帧图' }
+      showResult.value = true
+      return
     }
     const res = await storyboardApi.generateFirstFrameImage({
       shotId: selectedStoryboard.value.id,
@@ -4376,10 +4366,11 @@ const generateStoryboards = async () => {
   if (!activeEpisode.value || generatingStoryboard.value) return
   generatingStoryboard.value = true
   try {
-    let modelId = selectedModel.value
+    const modelId = await resolveTextModelInstanceId({ updateSelectedModel: true })
     if (!modelId) {
-      const defaultModel = await loadDefaultModel()
-      modelId = defaultModel?.id
+      result.value = { success: false, message: '没有可用的文本模型，无法生成分镜' }
+      showResult.value = true
+      return
     }
     const res = await storyboardApi.generate({
       episodeId: activeEpisode.value,
@@ -4476,18 +4467,6 @@ const getEpisodeName = (episodeId) => {
   return episode ? episode.name : '未知章节'
 }
 
-const loadDefaultModel = async () => {
-  try {
-    const result = await modelInstanceApi.getDefault('TEXT')
-    if (result.code === 200 && result.data) {
-      return result.data
-    }
-  } catch (err) {
-    console.warn('获取默认模型失败:', err)
-  }
-  return null
-}
-
 const loadTextModels = async () => {
   try {
     const result = await modelInstanceApi.list('TEXT', { page: 1, size: 100 })
@@ -4539,6 +4518,93 @@ const loadVideoModels = async () => {
   }
 }
 
+const resolveTextModelInstanceId = async ({ updateSelectedModel = false } = {}) => {
+  if (!textModels.value.length) {
+    await loadTextModels()
+  }
+  let modelId = null
+  const selected = selectedModel.value
+  if (selected && textModels.value.some((m) => m.id === selected)) {
+    modelId = selected
+  }
+  if (!modelId) {
+    modelId = defaultTextModelId.value
+  }
+  if (!modelId) {
+    const defRes = await modelInstanceApi.getDefault('TEXT')
+    modelId = defRes?.data?.id || null
+    if (modelId) {
+      defaultTextModelId.value = modelId
+    }
+  }
+  if (!modelId && textModels.value.length > 0) {
+    modelId = textModels.value[0].id
+  }
+  if (updateSelectedModel && modelId) {
+    selectedModel.value = modelId
+  }
+  return modelId
+}
+
+const resolveVideoModelInstanceId = async ({ updateSelectedModel = false } = {}) => {
+  if (!videoModels.value.length) {
+    await loadVideoModels()
+  }
+  let modelId = null
+  const selected = selectedModel.value
+  if (selected && videoModels.value.some((m) => m.id === selected)) {
+    modelId = selected
+  }
+  if (!modelId) {
+    modelId = defaultVideoModelId.value
+  }
+  if (!modelId) {
+    const defRes = await modelInstanceApi.getDefault('VIDEO')
+    modelId = defRes?.data?.id || null
+    if (modelId) {
+      defaultVideoModelId.value = modelId
+    }
+  }
+  if (!modelId && videoModels.value.length > 0) {
+    modelId = videoModels.value[0].id
+  }
+  if (updateSelectedModel && modelId) {
+    selectedModel.value = modelId
+  }
+  return modelId
+}
+
+const resolveImageModelInstanceId = async ({ updateSelectedModel = false } = {}) => {
+  if (!imageModels.value.length) {
+    await loadImageModels()
+  }
+  let modelId = null
+  const selected = selectedModel.value
+  if (selected && imageModels.value.some((m) => m.id === selected)) {
+    modelId = selected
+  }
+  if (!modelId) {
+    const defId = defaultImageModelId.value
+    if (defId && imageModels.value.some((m) => m.id === defId)) {
+      modelId = defId
+    }
+  }
+  if (!modelId) {
+    const defRes = await modelInstanceApi.getDefault('IMAGE')
+    modelId = defRes?.data?.id || null
+    if (modelId) {
+      defaultImageModelId.value = modelId
+    }
+  }
+  if (!modelId && imageModels.value.length > 0) {
+    modelId = imageModels.value[0].id
+  }
+  if (updateSelectedModel && modelId) {
+    selectedModel.value = modelId
+  }
+  return modelId
+}
+
 const nextStep = async () => {
   if (currentStepNum.value === 0) {
     await saveEpisode()
@@ -4576,10 +4642,9 @@ const extractInfo = async () => {
   extracting.value = true
   globalStore.setLoading(true, '正在分析文本内容...')
   try {
-    let modelId = selectedModel.value
+    const modelId = await resolveTextModelInstanceId({ updateSelectedModel: true })
     if (!modelId) {
-      const defaultModel = await loadDefaultModel()
-      modelId = defaultModel?.id
+      throw new Error('没有可用的文本模型，无法提取信息')
     }
     const result = await episodeApi.extract(activeEpisode.value, modelId)
     // 检查业务码
