@@ -87,7 +87,7 @@ public class SceneServiceImpl extends ServiceImpl<SceneMapper, Scene> implements
         Scene scene = getById(sceneId);
         // 删除Minio中的数据
         if (!ObjectUtils.isEmpty(scene.getThumbnail())) {
-            String objectName = scene.getThumbnail().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String objectName = minioProperties.parseObjectKeyFromStoredUrl(scene.getThumbnail());
             minioUtil.deleteObject(MinioConstant.BUCKET_NAME , objectName);
         }
 
@@ -112,12 +112,12 @@ public class SceneServiceImpl extends ServiceImpl<SceneMapper, Scene> implements
 
 
         // 修改场景图片url
-        String thumbnail = minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/" + objectName;
+        String thumbnail = minioProperties.buildPublicObjectUrl(objectName);
 
         // 校验：是否 Minio中存在图片
         if (!ObjectUtils.isEmpty(scene.getThumbnail()) && !scene.getThumbnail().equals(thumbnail)) {
             // 存在且不相同，则删除原来的
-            String oldObjectName = scene.getThumbnail().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String oldObjectName = minioProperties.parseObjectKeyFromStoredUrl(scene.getThumbnail());
             minioUtil.deleteObject(MinioConstant.BUCKET_NAME, oldObjectName);
         }
 

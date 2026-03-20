@@ -178,7 +178,7 @@ public class EpisodePersistFacade {
                 img.length,
                 MinioConstant.BUCKET_NAME, objectName);
 
-        String thumbnail = minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/" + objectName;
+        String thumbnail = minioProperties.buildPublicObjectUrl(objectName);
         scene.setThumbnail(thumbnail);
 
         return scene;
@@ -198,7 +198,7 @@ public class EpisodePersistFacade {
                 img.length,
                 MinioConstant.BUCKET_NAME, objectName);
 
-        String avatar = minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/" + objectName;
+        String avatar = minioProperties.buildPublicObjectUrl(objectName);
         characters.setAvatar(avatar);
 
         return characters;

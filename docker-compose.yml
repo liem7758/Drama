@@ -160,6 +160,7 @@ services:
       SPRING_RABBITMQ_PASSWORD: yihen0214
       SPRING_ELASTICSEARCH_URIS: http://es:9200
       MINIO_END_POINT: http://minio:9000
+      MINIO_PUBLIC_END_POINT: ${MINIO_PUBLIC_END_POINT:-http://127.0.0.1:9000}
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       QDRANT_HOST: qdrant

@@ -50,6 +50,7 @@ logging:
 minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   end-point: ${MINIO_END_POINT:http://127.0.0.1:9000}
+  public-end-point: ${MINIO_PUBLIC_END_POINT:}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
 
 qdrant:

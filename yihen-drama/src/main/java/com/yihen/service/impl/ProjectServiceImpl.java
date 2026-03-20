@@ -149,12 +149,12 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
 
 
         // 修改场景图片url
-        String cover = minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/" + objectName;
+        String cover = minioProperties.buildPublicObjectUrl(objectName);
 
         // 校验：是否 Minio中存在图片
         if (!org.springframework.util.ObjectUtils.isEmpty(project.getCover()) && !project.getCover().equals(cover)) {
             // 存在且不相同，则删除原来的
-            String oldObjectName = project.getCover().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String oldObjectName = minioProperties.parseObjectKeyFromStoredUrl(project.getCover());
             minioUtil.deleteObject(MinioConstant.BUCKET_NAME, oldObjectName);
         }
 

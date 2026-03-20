@@ -102,7 +102,7 @@ public class CharacterServiceImpl extends ServiceImpl<CharacterMapper, Character
         Characters characters = getById(characterId);
         // 删除Minio中的数据
         if (!ObjectUtils.isEmpty(characters.getAvatar())) {
-            String objectName = characters.getAvatar().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String objectName = minioProperties.parseObjectKeyFromStoredUrl(characters.getAvatar());
             minioUtil.deleteObject(MinioConstant.BUCKET_NAME , objectName);
         }
 
@@ -127,12 +127,12 @@ public class CharacterServiceImpl extends ServiceImpl<CharacterMapper, Character
 
 
         // 修改场景图片url
-        String avatar = minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/" + objectName;
+        String avatar = minioProperties.buildPublicObjectUrl(objectName);
 
         // 校验：是否 Minio中存在图片
         if (!ObjectUtils.isEmpty(characters.getAvatar()) && !characters.getAvatar().equals(avatar)) {
             // 存在且不相同，则删除原来的
-            String oldObjectName = characters.getAvatar().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String oldObjectName = minioProperties.parseObjectKeyFromStoredUrl(characters.getAvatar());
             minioUtil.deleteObject(MinioConstant.BUCKET_NAME, oldObjectName);
         }
 

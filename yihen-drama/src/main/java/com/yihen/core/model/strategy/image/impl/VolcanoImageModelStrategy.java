@@ -59,7 +59,7 @@ public class VolcanoImageModelStrategy implements ImageModelStrategy {
         // 场景图
         List<Scene> scenes = storyboard.getScenes();
         for (Scene scene : scenes) {
-            String objectName = scene.getThumbnail().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String objectName = minioProperties.parseObjectKeyFromStoredUrl(scene.getThumbnail());
             GetObjectResponse object = minioUtil.getObject(MinioConstant.BUCKET_NAME, objectName);
             String imageFormat = UrlUtils.extractFileExtension(scene.getThumbnail());
             byte[] bytes = object.readAllBytes();
@@ -71,7 +71,7 @@ public class VolcanoImageModelStrategy implements ImageModelStrategy {
         // 角色图
         List<Characters> characters = storyboard.getCharacters();
         for (Characters character : characters) {
-            String objectName = character.getAvatar().replace(minioProperties.getEndPoint() + "/" + MinioConstant.BUCKET_NAME + "/", "");
+            String objectName = minioProperties.parseObjectKeyFromStoredUrl(character.getAvatar());
             GetObjectResponse object = minioUtil.getObject(MinioConstant.BUCKET_NAME, objectName);
             String imageFormat = UrlUtils.extractFileExtension(character.getAvatar());
             byte[] bytes = object.readAllBytes();
