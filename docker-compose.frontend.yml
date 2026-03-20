@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build:
+      context: ./yihen-ai-short-drama-front-end/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    container_name: yihen-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:3000"
